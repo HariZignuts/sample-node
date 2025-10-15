@@ -18,9 +18,11 @@ pipeline {
 
     // 3. Pipeline Stages
     stages {
+
+        // -------- ✅ NEW STAGE: Checkout Code (Runs for ALL branches) --------
         stage('Checkout') {
             steps {
-                checkout scm
+                checkout scm // Checks out the source code from the repository
             }
         }
         
@@ -48,17 +50,22 @@ pipeline {
         // -------- ✅ NEW STAGE: Run Docker Container (Runs for ALL branches) --------
         stage('Run Container') {
             steps {
-            script {
-                def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
-                def containerName = "${APP_NAME}-${sanitizedBranchName}"
-                echo "Restarting container '${containerName}' for branch '${env.BRANCH_NAME}' with tag '${sanitizedBranchName}'"
+                script {
+                    def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
+                    def containerName = "${APP_NAME}-${sanitizedBranchName}"
+                    def imageNameWithTag = "${IMAGE_NAME}:${sanitizedBranchName}"
 
-                // Stop and remove if already running/existing (ignore errors if not found)
-                sh "docker rm -f ${containerName} || true"
+                    echo "Deploying latest version of ${imageNameWithTag}"
 
-                // Start fresh container
-                sh "docker run -d -p 3000:3000 --name ${containerName} ${IMAGE_NAME}:${sanitizedBranchName}"
-            }
+                    // 1. Pull the most recent version of the image from Docker Hub
+                    sh "docker pull ${imageNameWithTag}"
+
+                    // 2. Stop and remove the old container if it exists
+                    sh "docker rm -f ${containerName} || true"
+
+                    // 3. Start a new container using the freshly pulled image
+                    sh "docker run -d -p 3000:3000 --name ${containerName} ${imageNameWithTag}"
+                }
             }
         }
     }
