@@ -19,26 +19,28 @@ pipeline {
     // 3. Pipeline Stages
     stages {
         
-        // -------- ✅ NEW STAGE: Checkout Code (Runs for ALL branches) --------
-        stage('Checkout') {
-            steps {
-                // This command pulls the source code from your GitHub repository
-                // into the Jenkins workspace, making it available for the next stage.
-                checkout scm
+        stage('Build and Push Image') {
+            // Only run for main or dev branches
+            when {
+                anyOf {
+                    branch 'main'
+                    branch 'dev'
+                }
             }
-        }
-        
-        // -------- STAGE 2: Build Docker Image (Runs for ALL branches) --------
-        stage('Build Image') {
             steps {
                 script {
                     def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
-                    echo "Building image for branch '${env.BRANCH_NAME}' with tag '${sanitizedBranchName}'"
-                    // Now this command can find your Dockerfile and source code
-                    sh "docker build -t ${IMAGE_NAME}:${sanitizedBranchName} ."
+                    echo "Building and pushing image for branch '${env.BRANCH_NAME}'"
+                    
+                    // The withRegistry block securely logs you in
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
+                        // Use --push to build and send to Docker Hub in one step
+                        sh "docker build --push -t ${IMAGE_NAME}:${sanitizedBranchName} ."
+                    }
                 }
             }
         }
+        // -------- ✅ NEW STAGE: Run Docker Container (Runs for ALL branches) --------
         stage('Run Container') {
             steps {
                 script {
