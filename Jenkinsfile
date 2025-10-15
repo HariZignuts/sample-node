@@ -39,5 +39,15 @@ pipeline {
                 }
             }
         }
+        stage('Run Container') {
+            steps {
+                script {
+                    def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
+                    echo "Running container for branch '${env.BRANCH_NAME}' with tag '${sanitizedBranchName}'"
+                    // Run the Docker container in detached mode, mapping port 3000
+                    sh "docker run -d -p 3000:3000 --name ${APP_NAME}-${sanitizedBranchName} ${IMAGE_NAME}:${sanitizedBranchName}"
+                }
+            }
+        }
     }
 }
