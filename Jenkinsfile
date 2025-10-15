@@ -43,12 +43,17 @@ pipeline {
         // -------- ✅ NEW STAGE: Run Docker Container (Runs for ALL branches) --------
         stage('Run Container') {
             steps {
-                script {
-                    def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
-                    echo "Running container for branch '${env.BRANCH_NAME}' with tag '${sanitizedBranchName}'"
-                    // Run the Docker container in detached mode, mapping port 3000
-                    sh "docker run -d -p 3000:3000 --name ${APP_NAME}-${sanitizedBranchName} ${IMAGE_NAME}:${sanitizedBranchName}"
-                }
+            script {
+                def sanitizedBranchName = env.BRANCH_NAME.replaceAll('/', '-')
+                def containerName = "${APP_NAME}-${sanitizedBranchName}"
+                echo "Restarting container '${containerName}' for branch '${env.BRANCH_NAME}' with tag '${sanitizedBranchName}'"
+
+                // Stop and remove if already running/existing (ignore errors if not found)
+                sh "docker rm -f ${containerName} || true"
+
+                // Start fresh container
+                sh "docker run -d -p 3000:3000 --name ${containerName} ${IMAGE_NAME}:${sanitizedBranchName}"
+            }
             }
         }
     }
