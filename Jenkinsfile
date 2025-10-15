@@ -18,6 +18,11 @@ pipeline {
 
     // 3. Pipeline Stages
     stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
         
         stage('Build and Push Image') {
             // Only run for main or dev branches
