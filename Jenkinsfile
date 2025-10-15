@@ -10,7 +10,7 @@ pipeline {
         
         // --- CONFIGURE YOUR PROJECT HERE ---
         // Your Docker Hub username (automatically taken from credentials)
-        DOCKERHUB_USERNAME = DOCKER_CREDS_USR
+        DOCKERHUB_USERNAME = "malamhari"
         // The name of your application (e.g., 'sample-node', 'my-api')
         APP_NAME           = "sample-node" // <-- Change this
         
